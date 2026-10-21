@@ -13,7 +13,7 @@ module.exports = {
             if (!args.length) {
                 return await m.reply(`ᴜsᴀɢᴇ: .ᴛɪᴋᴛᴏᴋ <ᴜʀʟ>
 
-ᴇxᴀᴍᴘʟᴇ: .ᴛɪᴋᴛᴏᴋ https://vt.tiktok.com/ZSrRVYRUJ/`);
+ᴇxᴀᴍᴘʟᴇ: .ᴛɪᴋᴛᴏᴋ https://www.tiktok.com/@scout2015/video/6718335390845095173`);
             }
 
             const url = args[0];
