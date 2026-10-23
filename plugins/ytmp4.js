@@ -137,7 +137,7 @@ module.exports = {
                         `🎬 ${title}\n\n` +
                         `📺 Quality: ${selected.quality}p\n` +
                         `📦 Size: ${(buffer.length / (1024 * 1024)).toFixed(2)} MB\n` +
-                        `👑 AB-ZTECH 🇬🇭`,
+                        `ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ʙʏ XLICON V2`,
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
