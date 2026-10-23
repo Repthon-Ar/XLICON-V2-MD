@@ -1,6 +1,3 @@
-const axios = require('axios');
-const fs = require('fs');
-
 module.exports = {
     name: 'facebook',
     description: 'Download Facebook videos',
@@ -24,52 +21,65 @@ module.exports = {
 
             await m.reply('ᴅᴏᴡɴʟᴏᴀᴅɪɴɢ ꜰᴀᴄᴇʙᴏᴏᴋ ᴠɪᴅᴇᴏ...');
 
-            const apiUrl = `https://api-rebix.zone.id/api/facebook?url=${encodeURIComponent(url)}`;
+            const MAX_SIZE = 64 * 1024 * 1024;
+            const apiUrl = `https://api-abztech.zone.id/download/omdown?url=${encodeURIComponent(url)}`;
 
-            const response = await axios.get(apiUrl);
+            const response = await fetch(apiUrl);
+            const data = await response.json();
 
-            if (!response.data.status || !response.data.result) {
-                return await m.reply('ғᴀɪʟᴇᴅ ᴛᴏ ꜰᴇᴛᴄʜ ꜰᴀᴄᴇʙᴏᴏᴋ ᴠɪᴅᴇᴏ\nᴘʟᴇᴀsᴇ ᴛʀʏ ᴀɢᴀɪɴ ʟᴀᴛᴇʀ');
+            if (!data.success || !data.video) {
+                return await m.reply('ғᴀɪʟᴇᴅ ᴛᴏ ꜰᴇᴛᴄʜ ꜰᴀᴄᴇʙᴏᴏᴋ ᴠɪᴅᴇᴏ');
             }
 
-            const result = response.data.result;
-            const media = result.media || [];
+            const videoFormat = data.formats?.find(
+                item => item.kind === 'video' &&
+                        item.ext === 'mp4' &&
+                        item.label?.includes('720p')
+            ) || data.formats?.find(
+                item => item.kind === 'video' && item.ext === 'mp4'
+            );
 
-            const videoUrl = media.find(item => item && item.startsWith('http') && !item.includes('play.google.com'));
+            const videoUrl = videoFormat?.url || data.video;
 
-            if (!videoUrl) {
-                return await m.reply('ɴᴏ ᴠɪᴅᴇᴏ ᴜʀʟ ꜰᴏᴜɴᴅ');
+            const videoResponse = await fetch(videoUrl);
+
+            if (!videoResponse.ok) {
+                throw new Error('Failed to fetch video stream');
             }
 
-            const videoResponse = await axios.get(videoUrl, {
-                responseType: 'arraybuffer'
-            });
+            const contentLength = Number(videoResponse.headers.get('content-length'));
 
-            const videoBuffer = Buffer.from(videoResponse.data);
-            const fileName = `facebook_${Date.now()}.mp4`;
-            const filePath = `./temp/${fileName}`;
-
-            if (!fs.existsSync('./temp')) {
-                fs.mkdirSync('./temp', { recursive: true });
+            if (contentLength > MAX_SIZE) {
+                await videoResponse.body?.cancel();
+                return await m.reply('❌ ᴠɪᴅᴇᴏ ᴇxᴄᴇᴇᴅs 64 MB. ᴅᴏᴡɴʟᴏᴀᴅ ᴄᴀɴᴄᴇʟʟᴇᴅ.');
             }
 
-            fs.writeFileSync(filePath, videoBuffer);
+            const chunks = [];
+            let totalSize = 0;
 
-            const title = result.metadata?.title || 'ɴᴏ ᴛɪᴛʟᴇ';
+            for await (const chunk of videoResponse.body) {
+                totalSize += chunk.length;
 
-            const caption = `*ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ*
+                if (totalSize > MAX_SIZE) {
+                    await videoResponse.body?.cancel();
+                    return await m.reply('❌ ᴠɪᴅᴇᴏ ᴇxᴄᴇᴇᴅs 64 MB. ᴅᴏᴡɴʟᴏᴀᴅ ᴄᴀɴᴄᴇʟʟᴇᴅ.');
+                }
+
+                chunks.push(Buffer.from(chunk));
+            }
+
+            const videoBuffer = Buffer.concat(chunks);
+            const title = data.title || 'Facebook Video';
+
+            await sock.sendMessage(m.from, {
+                video: videoBuffer,
+                caption: `*ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ*
 
 ᴛɪᴛʟᴇ: ${title}
 
-ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ʙʏ XLICON V2`;
-
-            await sock.sendMessage(m.from, {
-                video: fs.readFileSync(filePath),
-                caption: caption,
+ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ʙʏ XLICON V2`,
                 mimetype: 'video/mp4'
-            });
-
-            fs.unlinkSync(filePath);
+            }, { quoted: m });
 
         } catch (err) {
             console.error('Facebook Error:', err);
