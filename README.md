@@ -96,12 +96,16 @@ NOW Deploy👇
 `Development , Features Enhancement , Plugin Debbuging`
 
 ## 🌈 `Support Us`
-- **Mail Us:** [salmansheikh2500@gmail.com](mailto:salmansheikh2500@gmail.com)
+- **Mail Us:**
+  1. [salmansheikh2500@gmail.com](mailto:salmansheikh2500@gmail.com)
+  2. [abztech@gmail.com](mailto:abztech@gmail.com)
 - **Join Our Support Group:**
  <p align="center">
    
   ## ``Support Channel``
    
-   [![WHATSAPP](https://img.shields.io/badge/Support%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](  https://whatsapp.com/channel/0029VaMGgVL3WHTNkhzHik3c)
+   [![DEV WHATSAPP](https://img.shields.io/badge/Support%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](  https://whatsapp.com/channel/0029VaMGgVL3WHTNkhzHik3c)
+<br>
+     [![BOT SUPPORT](https://img.shields.io/badge/Support%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](  https://whatsapp.com/channel/0029Vb75sMeKgsNyCbSkj20s)
 
 
