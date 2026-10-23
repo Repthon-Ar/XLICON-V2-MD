@@ -1,5 +1,7 @@
 const yts = require('yt-search');
 
+let lastQuality = 720;
+
 module.exports = {
     name: 'ymp4',
     description: 'Download YouTube video as MP4 (link or search)',
@@ -34,117 +36,90 @@ module.exports = {
                 finalUrl = searchInfo.url;
             }
 
-            let parsedUrl;
-
-            try {
-                parsedUrl = new URL(finalUrl);
-            } catch {
-                return m.reply('❌ Invalid YouTube URL.');
-            }
-
-            const hostname = parsedUrl.hostname
-                .toLowerCase()
-                .replace(/^www\./, '')
-                .replace(/^m\./, '');
-
-            if (
-                hostname !== 'youtube.com' &&
-                hostname !== 'youtu.be' &&
-                !hostname.endsWith('.youtube.com')
-            ) {
-                return m.reply('❌ Please provide a valid YouTube link.');
-            }
-
             const apiUrl =
                 'https://api-abztech.zone.id/download/omdown?url=' +
                 encodeURIComponent(finalUrl);
 
             const apiRes = await fetch(apiUrl);
-
-            if (!apiRes.ok) {
-                throw new Error(`API error: HTTP ${apiRes.status}`);
-            }
-
             const data = await apiRes.json();
 
-            if (data?.success !== true) {
-                throw new Error(
-                    data?.message || 'Failed to retrieve video.'
+            if (!apiRes.ok || !data?.success) {
+                return m.reply(
+                    `❌ API Error: ${data?.message || 'Failed to get video.'}`
                 );
             }
 
             const title =
-                data.title ||
-                searchInfo?.title ||
-                'YouTube Video';
+                data.title || searchInfo?.title || 'YouTube Video';
 
-            const formats = Array.isArray(data.formats)
-                ? data.formats
-                : [];
-
-            const videos = formats
-                .filter(f =>
-                    f?.kind === 'video' &&
-                    f?.ext === 'mp4' &&
-                    typeof f?.url === 'string' &&
-                    /^https?:\/\//i.test(f.url)
-                )
+            const videos = data.formats
+                .filter(f => f.kind === 'video' && f.ext === 'mp4')
                 .map(f => ({
                     ...f,
                     quality: Number(
-                        f.label?.match(/(\d+)p/i)?.[1] || 0
+                        f.label.match(/(\d+)p/i)?.[1] || 0
                     )
-                }))
-                .sort((a, b) => b.quality - a.quality);
+                }));
+
+            lastQuality = lastQuality === 480 ? 720 : 480;
 
             const selected =
-                videos.find(v => v.quality === 720) ||
-                videos.filter(v => v.quality > 0 && v.quality < 720)
-                    .sort((a, b) => b.quality - a.quality)[0] ||
+                videos.find(v => v.quality === lastQuality) ||
                 videos[0];
 
             if (!selected) {
-                return m.reply('❌ No downloadable MP4 format found.');
+                return m.reply('❌ No MP4 format found.');
             }
 
+            const MAX_SIZE = 64 * 1024 * 1024;
+
             await m.reply(
-                `⏳ Downloading video...\n\n` +
+                `⏳ Checking video size...\n\n` +
                 `🎬 ${title}\n` +
-                `📺 Quality: ${selected.label || 'MP4'}`
+                `📺 Quality: ${selected.quality}p`
             );
 
             const videoRes = await fetch(selected.url);
 
             if (!videoRes.ok) {
                 throw new Error(
-                    `Video download failed: HTTP ${videoRes.status}`
+                    `Download failed: HTTP ${videoRes.status}`
                 );
             }
 
-            const contentType =
-                videoRes.headers.get('content-type') || '';
+            const contentLength = Number(
+                videoRes.headers.get('content-length')
+            );
 
-            if (
-                contentType.includes('text/html') ||
-                contentType.includes('application/json')
-            ) {
-                throw new Error('API returned invalid video data.');
+            if (contentLength > MAX_SIZE) {
+                await videoRes.body?.cancel();
+
+                return m.reply(
+                    '❌ Video exceeds 64 MB. Download cancelled.'
+                );
             }
 
-            const buffer = Buffer.from(
-                await videoRes.arrayBuffer()
-            );
+            const chunks = [];
+            let totalSize = 0;
+
+            for await (const chunk of videoRes.body) {
+                totalSize += chunk.length;
+
+                if (totalSize > MAX_SIZE) {
+                    await videoRes.body?.cancel();
+
+                    return m.reply(
+                        '❌ Video exceeds 64 MB. Download cancelled.'
+                    );
+                }
+
+                chunks.push(chunk);
+            }
+
+            const buffer = Buffer.concat(chunks);
 
             if (!buffer.length) {
                 throw new Error('Downloaded video is empty.');
-            }
-
-            const MAX_SIZE = 64 * 1024 * 1024;
-
-            if (buffer.length > MAX_SIZE) {
-                return m.reply(
-                    '❌ Video exceeds the 64 MB upload limit.'
-                );
             }
 
             const safeName = title
@@ -160,16 +135,16 @@ module.exports = {
                     fileName: `${safeName}.mp4`,
                     caption:
                         `🎬 ${title}\n\n` +
-                        `📺 Quality: ${selected.label || 'MP4'}\n` +
+                        `📺 Quality: ${selected.quality}p\n` +
+                        `📦 Size: ${(buffer.length / (1024 * 1024)).toFixed(2)} MB\n` +
                         `👑 AB-ZTECH 🇬🇭`,
                     contextInfo: {
                         forwardingScore: 999,
                         isForwarded: true,
                         forwardedNewsletterMessageInfo: {
-                            newsletterJid:
-                                '120363230794474148@newsletter',
+                            newsletterJid: '120363230794474148@newsletter',
                             newsletterName:
-                                '𝘈𝘉-𝘡𝘛𝘌𝘊𝘏🇬🇭「 𝙏𝙞𝙢𝙚 - 𝙏𝙞𝙢𝙚𝙡𝙚𝙨𝙨 」',
+                                '𝘈𝘉-𝘡𝘛𝘌𝘊𝘏🇬🇭「 𝙏𝙞𝙢𝙚 - 𝙏𝙞𝙢𝙚𝙡𝙦𝙨𝙨 」',
                             serverMessageId: 1
                         }
                     }
