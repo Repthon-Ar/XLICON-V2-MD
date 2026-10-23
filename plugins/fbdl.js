@@ -27,7 +27,7 @@ module.exports = {
             const response = await fetch(apiUrl);
             const data = await response.json();
 
-            if (!data.success || !data.video) {
+            if (!response.ok || !data.success || data.platform !== 'FACEBOOK') {
                 return await m.reply('ғᴀɪʟᴇᴅ ᴛᴏ ꜰᴇᴛᴄʜ ꜰᴀᴄᴇʙᴏᴏᴋ ᴠɪᴅᴇᴏ');
             }
 
@@ -41,16 +41,20 @@ module.exports = {
 
             const videoUrl = videoFormat?.url || data.video;
 
+            if (!videoUrl) {
+                return await m.reply('ɴᴏ ᴠɪᴅᴇᴏ ᴜʀʟ ꜰᴏᴜɴᴅ');
+            }
+
             const videoResponse = await fetch(videoUrl);
 
-            if (!videoResponse.ok) {
+            if (!videoResponse.ok || !videoResponse.body) {
                 throw new Error('Failed to fetch video stream');
             }
 
             const contentLength = Number(videoResponse.headers.get('content-length'));
 
             if (contentLength > MAX_SIZE) {
-                await videoResponse.body?.cancel();
+                await videoResponse.body.cancel();
                 return await m.reply('❌ ᴠɪᴅᴇᴏ ᴇxᴄᴇᴇᴅs 64 MB. ᴅᴏᴡɴʟᴏᴀᴅ ᴄᴀɴᴄᴇʟʟᴇᴅ.');
             }
 
@@ -61,7 +65,7 @@ module.exports = {
                 totalSize += chunk.length;
 
                 if (totalSize > MAX_SIZE) {
-                    await videoResponse.body?.cancel();
+                    await videoResponse.body.cancel();
                     return await m.reply('❌ ᴠɪᴅᴇᴏ ᴇxᴄᴇᴇᴅs 64 MB. ᴅᴏᴡɴʟᴏᴀᴅ ᴄᴀɴᴄᴇʟʟᴇᴅ.');
                 }
 
@@ -71,15 +75,17 @@ module.exports = {
             const videoBuffer = Buffer.concat(chunks);
             const title = data.title || 'Facebook Video';
 
-            await sock.sendMessage(m.from, {
-                video: videoBuffer,
-                caption: `*ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ*
+            const caption = `*ꜰᴀᴄᴇʙᴏᴏᴋ ᴅᴏᴡɴʟᴏᴀᴅᴇʀ*
 
 ᴛɪᴛʟᴇ: ${title}
 
-ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ʙʏ XLICON V2`,
+ᴅᴏᴡɴʟᴏᴀᴅᴇᴅ ʙʏ XLICON V2`;
+
+            await m.reply({
+                video: videoBuffer,
+                caption,
                 mimetype: 'video/mp4'
-            }, { quoted: m });
+            });
 
         } catch (err) {
             console.error('Facebook Error:', err);
