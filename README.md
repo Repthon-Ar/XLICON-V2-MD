@@ -106,6 +106,6 @@ NOW Deploy👇
    
    [![DEV WHATSAPP](https://img.shields.io/badge/Support%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](  https://whatsapp.com/channel/0029VaMGgVL3WHTNkhzHik3c)
 <br>
-     [![BOT SUPPORT](https://img.shields.io/badge/Support%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](  https://whatsapp.com/channel/0029Vb75sMeKgsNyCbSkj20s)
+     [![BOT SUPPORT](https://img.shields.io/badge/BOT%20Support%20Channel-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](  https://whatsapp.com/channel/0029Vb75sMeKgsNyCbSkj20s)
 
 
