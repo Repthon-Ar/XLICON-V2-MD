@@ -98,7 +98,7 @@ NOW Deploy👇
 ## 🌈 `Support Us`
 - **Mail Us:**
   1. [salmansheikh2500@gmail.com](mailto:salmansheikh2500@gmail.com)
-  2. [abztech@gmail.com](mailto:abztech@gmail.com)
+  2. [abztech882@gmail.com](mailto:abztech882@gmail.com)
      <br>
 - **Join Our Support Group:**
   <br>
